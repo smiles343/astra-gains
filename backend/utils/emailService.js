@@ -47,7 +47,7 @@ const emailTemplates = {
       <h2>Hello ${username},</h2>
       <p>Your deposit has been successfully processed!</p>
       <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-        <p><strong>Amount:</strong> $${amount.toFixed(2)}</p>
+        <p><strong>Amount:</strong> ${amount} KSh</p>
         <p><strong>Status:</strong> Completed</p>
       </div>
       <p>Your wallet has been updated. You can now create orders.</p>
@@ -55,8 +55,22 @@ const emailTemplates = {
     `
   }),
 
+  paymentRejected: (username, amount, reason) => ({
+    subject: '⚠️ Payment Rejected - Astra Gains',
+    html: `
+      <h2>Hello ${username},</h2>
+      <p>Your payment request could not be processed.</p>
+      <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+        <p><strong>Amount:</strong> ${amount} KSh</p>
+        <p><strong>Reason:</strong> ${reason}</p>
+      </div>
+      <p>Please try again or contact support if you have questions.</p>
+      <p>Best regards,<br/>Astra Gains Team</p>
+    `
+  }),
+
   withdrawalRequest: (username, amount) => ({
-    subject: '📤 Withdrawal Request Received - Astra Gains',
+    subject: '📄 Withdrawal Request Received - Astra Gains',
     html: `
       <h2>Hello ${username},</h2>
       <p>Your withdrawal request has been received and is being processed.</p>
@@ -77,7 +91,7 @@ const emailTemplates = {
       <h3>Getting Started:</h3>
       <ol>
         <li>Log in to your dashboard</li>
-        <li>Add funds to your wallet</li>
+        <li>Add funds to your wallet via M-Pesa</li>
         <li>Create your first order</li>
         <li>Track your order progress</li>
       </ol>
@@ -86,7 +100,38 @@ const emailTemplates = {
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Dashboard:</strong> https://yoursite.com/dashboard</p>
       </div>
+      <p><strong>M-Pesa Payment Details:</strong></p>
+      <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+        <p><strong>Business Name:</strong> ASTRA GAINS</p>
+        <p><strong>Paybill Code:</strong> 174379</p>
+        <p><strong>Phone:</strong> +254797856232</p>
+      </div>
       <p>If you have any questions, feel free to contact our support team.</p>
+      <p>Best regards,<br/>Astra Gains Team</p>
+    `
+  }),
+
+  paymentPending: (username, amount, reference) => ({
+    subject: '⏳ Payment Pending - Action Required',
+    html: `
+      <h2>Hello ${username},</h2>
+      <p>Your payment request has been created. Please complete the M-Pesa payment now.</p>
+      <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+        <p><strong>Amount to Pay:</strong> ${amount} KSh</p>
+        <p><strong>Reference:</strong> ${reference}</p>
+        <p><strong>Paybill:</strong> 174379</p>
+        <p><strong>Business Name:</strong> ASTRA GAINS</p>
+      </div>
+      <h3>How to Pay:</h3>
+      <ol>
+        <li>Open M-Pesa on your phone</li>
+        <li>Go to Lipa na M-Pesa Online</li>
+        <li>Enter Paybill: <strong>174379</strong></li>
+        <li>Enter Reference: <strong>${reference}</strong></li>
+        <li>Enter Amount: <strong>${amount}</strong></li>
+        <li>Enter PIN and submit</li>
+      </ol>
+      <p>Once we receive your payment, your wallet will be updated automatically.</p>
       <p>Best regards,<br/>Astra Gains Team</p>
     `
   }),

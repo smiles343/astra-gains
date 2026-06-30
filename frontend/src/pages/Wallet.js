@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import { FiDollarSign, FiPlus, FiMinus, FiLoader, FiX } from 'react-icons/fi';
+import { FiDollarSign, FiPlus, FiMinus, FiLoader, FiX, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import { getWalletBalance, getTransactions, withdrawFunds } from '../utils/api';
 import { toast } from 'react-toastify';
-import MpesaDeposit from '../components/MpesaDeposit';
+import api from '../utils/api';
+import MpesaPayment from '../components/MpesaPayment';
 
 const Wallet = () => {
   const [wallet, setWallet] = useState(null);
@@ -12,11 +13,12 @@ const Wallet = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [amount, setAmount] = useState('');
-  const [action, setAction] = useState('deposit');
   const [showMpesa, setShowMpesa] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState([]);
 
   useEffect(() => {
     fetchWalletData();
+    fetchPendingPayments();
   }, []);
 
   const fetchWalletData = async () => {
@@ -31,6 +33,17 @@ const Wallet = () => {
       toast.error('Failed to load wallet');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingPayments = async () => {
+    try {
+      const response = await api.get('/payment/pending');
+      if (response.data.success) {
+        setPendingPayments(response.data.payments);
+      }
+    } catch (error) {
+      console.error('Failed to fetch pending payments');
     }
   };
 
@@ -91,12 +104,23 @@ const Wallet = () => {
             </div>
           </div>
 
+          {/* Pending Payments Alert */}
+          {pendingPayments.length > 0 && (
+            <div className="bg-yellow-600/20 border border-yellow-600/50 rounded-lg p-4 mb-8 flex space-x-3">
+              <FiAlertCircle className="text-yellow-400 flex-shrink-0 mt-1" />
+              <div>
+                <p className="text-yellow-300 font-semibold">Pending Payments</p>
+                <p className="text-slate-300 text-sm mt-1">You have {pendingPayments.length} pending payment(s). Check your email for payment instructions.</p>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             {/* M-Pesa Deposit */}
             <div>
               <button
                 onClick={() => setShowMpesa(true)}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 rounded-lg transition flex items-center justify-center space-x-2 mb-4"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 rounded-lg transition flex items-center justify-center space-x-2"
               >
                 <FiPlus /> <span>M-Pesa Deposit</span>
               </button>
@@ -106,12 +130,12 @@ const Wallet = () => {
                   <div className="bg-slate-900 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto relative">
                     <button
                       onClick={() => setShowMpesa(false)}
-                      className="absolute top-4 right-4 text-slate-400 hover:text-white"
+                      className="absolute top-4 right-4 text-slate-400 hover:text-white z-10"
                     >
                       <FiX size={24} />
                     </button>
                     <div className="p-8">
-                      <MpesaDeposit
+                      <MpesaPayment
                         onSuccess={fetchWalletData}
                         onClose={() => setShowMpesa(false)}
                       />
