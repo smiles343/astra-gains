@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import { FiDollarSign, FiPlus, FiMinus, FiLoader } from 'react-icons/fi';
-import { getWalletBalance, getTransactions, depositFunds, withdrawFunds } from '../utils/api';
+import { FiDollarSign, FiPlus, FiMinus, FiLoader, FiX } from 'react-icons/fi';
+import { getWalletBalance, getTransactions, withdrawFunds } from '../utils/api';
 import { toast } from 'react-toastify';
+import MpesaDeposit from '../components/MpesaDeposit';
 
 const Wallet = () => {
   const [wallet, setWallet] = useState(null);
@@ -12,6 +13,7 @@ const Wallet = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [action, setAction] = useState('deposit');
+  const [showMpesa, setShowMpesa] = useState(false);
 
   useEffect(() => {
     fetchWalletData();
@@ -32,7 +34,7 @@ const Wallet = () => {
     }
   };
 
-  const handleAction = async (e) => {
+  const handleWithdraw = async (e) => {
     e.preventDefault();
     if (!amount || amount <= 0) {
       toast.error('Please enter a valid amount');
@@ -41,17 +43,12 @@ const Wallet = () => {
 
     setActionLoading(true);
     try {
-      if (action === 'deposit') {
-        await depositFunds(parseFloat(amount));
-        toast.success('Deposit successful!');
-      } else {
-        await withdrawFunds(parseFloat(amount));
-        toast.success('Withdrawal request submitted!');
-      }
+      await withdrawFunds(parseFloat(amount));
+      toast.success('Withdrawal request submitted!');
       setAmount('');
       fetchWalletData();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Action failed');
+      toast.error(error.response?.data?.message || 'Withdrawal failed');
     } finally {
       setActionLoading(false);
     }
@@ -94,64 +91,67 @@ const Wallet = () => {
             </div>
           </div>
 
-          {/* Deposit/Withdraw Form */}
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 mb-8 max-w-md">
-            <form onSubmit={handleAction} className="space-y-4">
-              {/* Action Toggle */}
-              <div className="flex space-x-4 mb-6">
-                <button
-                  type="button"
-                  onClick={() => setAction('deposit')}
-                  className={`flex-1 py-2 rounded-lg font-semibold transition ${
-                    action === 'deposit'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  <FiPlus className="inline mr-2" /> Deposit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAction('withdraw')}
-                  className={`flex-1 py-2 rounded-lg font-semibold transition ${
-                    action === 'withdraw'
-                      ? 'bg-red-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  <FiMinus className="inline mr-2" /> Withdraw
-                </button>
-              </div>
-
-              {/* Amount Input */}
-              <div>
-                <label className="block text-slate-300 text-sm font-medium mb-2">Amount ($)</label>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  min="1"
-                  step="0.01"
-                  required
-                  className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-500 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              {/* Submit Button */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* M-Pesa Deposit */}
+            <div>
               <button
-                type="submit"
-                disabled={actionLoading}
-                className={`w-full text-white font-semibold py-2 rounded-lg transition flex items-center justify-center space-x-2 disabled:opacity-50 ${
-                  action === 'deposit'
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
+                onClick={() => setShowMpesa(true)}
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 rounded-lg transition flex items-center justify-center space-x-2 mb-4"
               >
-                {actionLoading && <FiLoader className="animate-spin" />}
-                <span>{actionLoading ? 'Processing...' : `${action.charAt(0).toUpperCase() + action.slice(1)}`}</span>
+                <FiPlus /> <span>M-Pesa Deposit</span>
               </button>
-            </form>
+
+              {showMpesa && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-slate-900 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto relative">
+                    <button
+                      onClick={() => setShowMpesa(false)}
+                      className="absolute top-4 right-4 text-slate-400 hover:text-white"
+                    >
+                      <FiX size={24} />
+                    </button>
+                    <div className="p-8">
+                      <MpesaDeposit
+                        onSuccess={fetchWalletData}
+                        onClose={() => setShowMpesa(false)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Withdrawal Form */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 lg:col-span-2">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+                <FiMinus /> <span>Request Withdrawal</span>
+              </h3>
+              <form onSubmit={handleWithdraw} className="space-y-4">
+                <div>
+                  <label className="block text-slate-300 text-sm font-medium mb-2">Amount ($)</label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    min="1"
+                    step="0.01"
+                    required
+                    className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-500 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center space-x-2 disabled:opacity-50"
+                >
+                  {actionLoading && <FiLoader className="animate-spin" />}
+                  <span>{actionLoading ? 'Processing...' : 'Request Withdrawal'}</span>
+                </button>
+              </form>
+              <p className="text-slate-400 text-xs mt-4">Withdrawals are typically processed within 24-48 hours</p>
+            </div>
           </div>
 
           {/* Transaction History */}
